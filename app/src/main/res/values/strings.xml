@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">HumanMatting</string>
+    <string-array name="MattingModels">
+        <item>MobilenetV2</item>
+        <item>HRNet W18</item>
+    </string-array>
+</resources>

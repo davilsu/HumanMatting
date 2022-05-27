@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_v_50"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/white"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_v_75"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/white"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.75" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_h_7"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/white"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.075" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_h_15"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/white"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.15" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_h_225"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/white"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.225" />
+
+    <androidx.appcompat.widget.AppCompatSpinner
+        android:id="@+id/spinner_model_select"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawSelectorOnTop="true"
+        android:entries="@array/MattingModels"
+        android:minHeight="60dp"
+        app:layout_constraintBottom_toTopOf="@id/guideline_h_7"
+        app:layout_constraintEnd_toStartOf="@id/guideline_v_50"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switch_enable_gpu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="GPU"
+        app:layout_constraintBottom_toTopOf="@id/guideline_h_7"
+        app:layout_constraintEnd_toStartOf="@id/guideline_v_75"
+        app:layout_constraintStart_toStartOf="@id/guideline_v_50"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="HardcodedText" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switch_enable_int8"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="INT8"
+        app:layout_constraintBottom_toTopOf="@id/guideline_h_7"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@id/guideline_v_75"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="HardcodedText" />
+
+    <RadioGroup
+        android:id="@+id/radioGroup_perf"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toTopOf="@id/guideline_h_15"
+        app:layout_constraintEnd_toStartOf="@id/guideline_v_50"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/guideline_h_7">
+
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/radio_all"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="All"
+            tools:ignore="HardcodedText" />
+
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/radio_big"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Big"
+            tools:ignore="HardcodedText" />
+
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/radio_little"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Little"
+            tools:ignore="HardcodedText" />
+    </RadioGroup>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/button_take_photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Take Photo"
+        app:layout_constraintBottom_toTopOf="@id/guideline_h_15"
+        app:layout_constraintEnd_toEndOf="@id/guideline_v_75"
+        app:layout_constraintStart_toStartOf="@id/guideline_v_50"
+        app:layout_constraintTop_toTopOf="@id/guideline_h_7"
+        tools:ignore="HardcodedText" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/button_read_photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select"
+        app:layout_constraintBottom_toTopOf="@id/guideline_h_15"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@id/guideline_v_75"
+        app:layout_constraintTop_toTopOf="@id/guideline_h_7"
+        tools:ignore="HardcodedText" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/button_inference"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Process"
+        app:layout_constraintBottom_toTopOf="@id/guideline_h_225"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/guideline_h_15"
+        tools:ignore="HardcodedText" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/imageView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:adjustViewBounds="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/guideline_h_225" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
