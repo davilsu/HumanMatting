@@ -1,11 +1,16 @@
 package com.davilsu.peoplematting;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Camera;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,10 +18,17 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 
+import com.otaliastudios.cameraview.CameraListener;
 import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.PictureResult;
 import com.otaliastudios.cameraview.controls.Facing;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+
 public class CameraActivity extends AppCompatActivity {
+
+    private static final int REQUEST_CODE_SELECT_PHOTO = 0;
 
     private CameraView cameraView;
 
@@ -37,6 +49,12 @@ public class CameraActivity extends AppCompatActivity {
         cameraView.setLifecycleOwner(this);
 
         ((ImageView) findViewById(R.id.shutter)).setOnClickListener(v -> takePhoto());
+        cameraView.addCameraListener(new CameraListener() {
+            @Override
+            public void onPictureTaken(@NonNull PictureResult result) {
+                CameraActivity.this.onPictureTaken(result);
+            }
+        });
     }
 
     @Override
@@ -79,13 +97,40 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     public void pickFile() {
-        // TODO
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType("image/*");
+        startActivityForResult(intent, REQUEST_CODE_SELECT_PHOTO);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        switch (requestCode) {
+            case REQUEST_CODE_SELECT_PHOTO:
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    Intent intent = new Intent(this, SegmentationActivity.class);
+                    intent.setDataAndType(data.getData(), data.getType());
+                    startActivity(intent);
+                    overridePendingTransition(0, 0);
+                }
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+                break;
+        }
     }
 
     public void takePhoto() {
-        // TODO
-        startActivity(new Intent(this, SegmentationActivity.class));
-        overridePendingTransition(0, 0);
+        cameraView.takePicture();
+    }
+
+    public void onPictureTaken(PictureResult result) {
+        File tmpFile = new File(getCacheDir(), "photo.jpg");
+        result.toFile(tmpFile, file -> {
+            Intent intent = new Intent(this, SegmentationActivity.class);
+            intent.setData(Uri.fromFile(file));
+            startActivity(intent);
+            overridePendingTransition(0, 0);
+        });
     }
 
     @Override
