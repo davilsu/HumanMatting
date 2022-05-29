@@ -29,7 +29,7 @@ constexpr int kResolution = 512;
 // Constant values
 ///////////////////////////////////////////////////////////////////////////////////////////////
 constexpr const char *kTag = "MattingNetwork";
-constexpr float kBackgroundColor[3]{120, 255, 155};
+// constexpr float kBackgroundColor[3]{120, 255, 155};
 constexpr float kMean[3]{(255.0 / 2.0), (255.0 / 2.0), (255.0 / 2.0)};
 constexpr float kNorm[3]{(2.0 / 255.0), (2.0 / 255.0), (2.0 / 255.0)};
 
@@ -93,23 +93,31 @@ bool loadNetwork(JNIEnv *env, jobject assetManager, size_t modelIndex,
   return ret0 && ret1;
 }
 
-void blendImage(ncnn::Mat &img, const ncnn::Mat &alpha) {
+//void blendImage(ncnn::Mat &img, const ncnn::Mat &alpha) {
+//  auto img_ptr = reinterpret_cast<float *>(img.data);
+//  auto alpha_ptr = reinterpret_cast<float *>(alpha.data);
+//  ptrdiff_t width = img.w;
+//  ptrdiff_t height = img.h;
+//  ptrdiff_t n_pixels = width * height;
+//  for (ptrdiff_t h = 0; h < height; ++h) {
+//    for (ptrdiff_t w = 0; w < width; ++w) {
+//      ptrdiff_t pixel_index = h * width + w;
+//      float alpha_ = alpha_ptr[pixel_index];
+//      for (ptrdiff_t c = 0; c < 3; ++c) {
+//        img_ptr[pixel_index + n_pixels * c] =
+//            alpha_ * img_ptr[pixel_index + n_pixels * c] +
+//                (1 - alpha_) * kBackgroundColor[c];
+//      }
+//    }
+//  }
+//}
+
+void alphaConcate(ncnn::Mat &img, const ncnn::Mat &alpha) {
   auto img_ptr = reinterpret_cast<float *>(img.data);
   auto alpha_ptr = reinterpret_cast<float *>(alpha.data);
-  ptrdiff_t width = img.w;
-  ptrdiff_t height = img.h;
-  ptrdiff_t n_pixels = width * height;
-  for (ptrdiff_t h = 0; h < height; ++h) {
-    for (ptrdiff_t w = 0; w < width; ++w) {
-      ptrdiff_t pixel_index = h * width + w;
-      float alpha_ = alpha_ptr[pixel_index];
-      for (ptrdiff_t c = 0; c < 3; ++c) {
-        img_ptr[pixel_index + n_pixels * c] =
-            alpha_ * img_ptr[pixel_index + n_pixels * c] +
-                (1 - alpha_) * kBackgroundColor[c];
-      }
-    }
-  }
+  ptrdiff_t n_pixels = img.w * img.h;
+  std::copy(alpha_ptr, alpha_ptr + n_pixels, img_ptr + 3 * n_pixels);
+  std::for_each_n(img_ptr + 3 * n_pixels, n_pixels, [](float &elem){elem *= 255.F;});
 }
 
 bool isNetworkChange(int modelIndex, bool enableFP16, bool enableInt8) {
@@ -190,7 +198,7 @@ Java_com_davilsu_peoplematting_MattingNetwork_Process(
   int oriHeight = static_cast<int>(info.height);
 
   ncnn::Mat src, src_resize, alpha;
-  src = ncnn::Mat::from_android_bitmap(env, bitmap, ncnn::Mat::PIXEL_RGB);
+  src = ncnn::Mat::from_android_bitmap(env, bitmap, ncnn::Mat::PIXEL_RGBA);
   src_resize = ncnn::Mat::from_android_bitmap_resize(
       env, bitmap, ncnn::Mat::PIXEL_RGB, kResolution, kResolution);
   src_resize.substract_mean_normalize(kMean, kNorm);
@@ -202,8 +210,9 @@ Java_com_davilsu_peoplematting_MattingNetwork_Process(
   ex.extract("output", alpha);
   ncnn::resize_bilinear(alpha, alpha, oriWidth, oriHeight);
 
-  blendImage(src, alpha);
-  src.to_android_bitmap(env, bitmap, ncnn::Mat::PIXEL_RGB);
+  // blendImage(src, alpha);
+  alphaConcate(src, alpha);
+  src.to_android_bitmap(env, bitmap, ncnn::Mat::PIXEL_RGBA);
 
   double elapsed_time = ncnn::get_current_time() - start_time;
   __android_log_print(ANDROID_LOG_DEBUG, kTag, "%.2fms", elapsed_time);
