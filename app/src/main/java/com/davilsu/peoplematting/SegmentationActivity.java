@@ -7,6 +7,7 @@ import androidx.core.content.FileProvider;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.preference.PreferenceManager;
 
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -16,6 +17,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,12 +34,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class SegmentationActivity extends AppCompatActivity {
+
+    private static final int REQUEST_CODE_PICK_BACKGROUND = 1;
 
     private static final int INPUT_SIZE = 512;
 
@@ -251,16 +256,56 @@ public class SegmentationActivity extends AppCompatActivity {
     }
 
     public void blendColor(int color) {
-        Bitmap overlay = Bitmap.createBitmap(bitmapAlpha.getWidth(), bitmapAlpha.getHeight(), bitmapAlpha.getConfig());
-        Canvas canvas = new Canvas(overlay);
-        canvas.drawColor(color);
-        canvas.drawBitmap(bitmapAlpha, 0, 0, null);
-
-        bitmapBlended = overlay;
-        imageView.setImageBitmap(bitmapBlended);
+        executor.execute(() -> {
+            Bitmap overlay = Bitmap.createBitmap(bitmapAlpha.getWidth(), bitmapAlpha.getHeight(), bitmapAlpha.getConfig());
+            Canvas canvas = new Canvas(overlay);
+            canvas.drawColor(color);
+            canvas.drawBitmap(bitmapAlpha, 0, 0, null);
+            runOnUiThread(() -> {
+                bitmapBlended = overlay;
+                imageView.setImageBitmap(bitmapBlended);
+            });
+        });
     }
 
     public void blendImage() {
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType("image/*");
+        startActivityForResult(intent, REQUEST_CODE_PICK_BACKGROUND);
+    }
 
+    public void doBlendImage(Uri image) {
+        executor.execute(() -> {
+            Bitmap bitmapBackground;
+            try (InputStream in = getContentResolver().openInputStream(image)) {
+                bitmapBackground = BitmapFactory.decodeStream(in);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+
+            Bitmap overlay = Bitmap.createBitmap(bitmapAlpha.getWidth(), bitmapAlpha.getHeight(), bitmapAlpha.getConfig());
+            Canvas canvas = new Canvas(overlay);
+            canvas.drawBitmap(bitmapBackground, null, new Rect(0, 0, overlay.getWidth(), overlay.getHeight()), null);
+            canvas.drawBitmap(bitmapAlpha, 0, 0, null);
+            runOnUiThread(() -> {
+                bitmapBlended = overlay;
+                imageView.setImageBitmap(bitmapBlended);
+            });
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        switch (requestCode) {
+            case REQUEST_CODE_PICK_BACKGROUND:
+                if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+                    doBlendImage(data.getData());
+                }
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+                break;
+        }
     }
 }
