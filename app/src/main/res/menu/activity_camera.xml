@@ -3,12 +3,17 @@
     xmlns:material="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/switch_camera"
-        android:title="切换摄像头"
+        android:title="@string/switch_camera"
         android:icon="@drawable/ic_action_switch_camera"
         material:showAsAction="always"/>
     <item
+        android:id="@+id/pick_file"
+        android:title="@string/pick_file"
+        android:icon="@drawable/ic_action_pick_file"
+        material:showAsAction="ifRoom"/>
+    <item
         android:id="@+id/preferences"
-        android:title="首选项"
+        android:title="@string/preferences"
         android:icon="@drawable/ic_action_preferences"
         material:showAsAction="always"/>
 </menu>
