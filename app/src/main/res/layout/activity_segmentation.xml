@@ -12,7 +12,8 @@
         android:layout_height="0dp"
         app:layout_constraintTop_toTopOf="parent"
         android:scaleType="fitCenter"
-        app:layout_constraintBottom_toTopOf="@id/bg_picker_bar"/>
+        app:layout_constraintBottom_toTopOf="@id/bg_picker_bar"
+        android:background="@color/dark_gray" />
 
     <ProgressBar
         style="?android:attr/progressBarStyleLarge"
