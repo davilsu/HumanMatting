@@ -3,6 +3,7 @@ package com.davilsu.peoplematting;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.preference.PreferenceManager;
 
@@ -12,6 +13,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
@@ -43,6 +46,8 @@ public class SegmentationActivity extends AppCompatActivity {
     private ImageView imageView;
     @Nullable
     private Bitmap bitmapAlpha;
+    @Nullable
+    private Bitmap bitmapBlended;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +59,14 @@ public class SegmentationActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         imageView = findViewById(R.id.image_view);
+
+        ((ImageView) findViewById(R.id.color_pick_transparency)).setOnClickListener(view -> blendAlpha());
+        ((ImageView) findViewById(R.id.color_pick_black)).setOnClickListener(view -> blendColor(getColor(R.color.photo_black)));
+        ((ImageView) findViewById(R.id.color_pick_white)).setOnClickListener(view -> blendColor(getColor(R.color.photo_white)));
+        ((ImageView) findViewById(R.id.color_pick_red)).setOnClickListener(view -> blendColor(getColor(R.color.photo_red)));
+        ((ImageView) findViewById(R.id.color_pick_green)).setOnClickListener(view -> blendColor(getColor(R.color.photo_green)));
+        ((ImageView) findViewById(R.id.color_pick_blue)).setOnClickListener(view -> blendColor(getColor(R.color.photo_blue)));
+        ((ImageView) findViewById(R.id.color_pick_image)).setOnClickListener(view -> blendImage());
 
         Intent intent = getIntent();
         if (intent != null) {
@@ -87,7 +100,7 @@ public class SegmentationActivity extends AppCompatActivity {
             return;
         }
         double elapsedTime = ret / 100.0;
-        runOnUiThread(() -> Toast.makeText(this, String.format("Inference time: %.2fms", elapsedTime), Toast.LENGTH_SHORT).show());
+        runOnUiThread(() -> Toast.makeText(this, getString(R.string.inference_cost_time) + String.format("%.2fms", elapsedTime), Toast.LENGTH_SHORT).show());
 
         // TODO workaround
         int[] buf = new int[outputBitmap.getWidth() * outputBitmap.getHeight()];
@@ -96,6 +109,7 @@ public class SegmentationActivity extends AppCompatActivity {
 
         runOnUiThread(() -> {
             bitmapAlpha = outputBitmap;
+            bitmapBlended = outputBitmap;
             ProgressBar progressbar = findViewById(R.id.progress_bar);
             progressbar.setVisibility(View.GONE);
             imageView.setImageBitmap(outputBitmap);
@@ -141,7 +155,21 @@ public class SegmentationActivity extends AppCompatActivity {
     }
 
     public void sharePhoto() {
-        // TODO
+        if (bitmapBlended == null) {
+            return;
+        }
+        File tmpFile = new File(getExternalCacheDir(), "shared_photo.png");
+        try (OutputStream outputStream = new FileOutputStream(tmpFile)) {
+            bitmapBlended.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("image/jpeg");
+        Uri photoURI = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", tmpFile);
+        intent.putExtra(Intent.EXTRA_STREAM, photoURI);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(intent, getString(R.string.share_via)));
     }
 
     private OutputStream saveToGallery(String filename) throws FileNotFoundException {
@@ -160,17 +188,17 @@ public class SegmentationActivity extends AppCompatActivity {
     }
 
     public void savePhoto() {
-        if (bitmapAlpha == null) {
+        if (bitmapBlended == null) {
             return;
         }
 
         String filename = LocalDateTime.now().toString() + ".jpg";
         try (OutputStream outputStream = saveToGallery(filename)) {
-            bitmapAlpha.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+            bitmapBlended.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Toast.makeText(this, "Saved to " + filename, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.saved_to) + filename, Toast.LENGTH_SHORT).show();
     }
 
     private Bitmap decodeUri(Uri selectedImage) throws FileNotFoundException {
@@ -215,5 +243,24 @@ public class SegmentationActivity extends AppCompatActivity {
         Matrix matrix = new Matrix();
         matrix.postRotate(rotate);
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    }
+
+    public void blendAlpha() {
+        bitmapBlended = bitmapAlpha;
+        imageView.setImageBitmap(bitmapBlended);
+    }
+
+    public void blendColor(int color) {
+        Bitmap overlay = Bitmap.createBitmap(bitmapAlpha.getWidth(), bitmapAlpha.getHeight(), bitmapAlpha.getConfig());
+        Canvas canvas = new Canvas(overlay);
+        canvas.drawColor(color);
+        canvas.drawBitmap(bitmapAlpha, 0, 0, null);
+
+        bitmapBlended = overlay;
+        imageView.setImageBitmap(bitmapBlended);
+    }
+
+    public void blendImage() {
+
     }
 }
