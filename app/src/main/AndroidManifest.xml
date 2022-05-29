@@ -4,6 +4,9 @@
     package="com.davilsu.peoplematting">
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -16,7 +19,7 @@
         android:theme="@style/Theme.FinalMattingApp"
         tools:targetApi="32">
         <activity
-            android:name="com.davilsu.peoplematting.MainActivity"
+            android:name=".CameraActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
