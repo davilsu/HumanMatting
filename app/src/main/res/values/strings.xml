@@ -7,6 +7,8 @@
     <string name="default_camera_face">默认摄像头</string>
     <string name="segmentation_category">抠图</string>
     <string name="segmentation_network">图像分割网络</string>
+    <string name="fp16_quantization">FP16 量化</string>
+    <string name="fp16_quantization_summary">通过牺牲部分精度，加速推理过程</string>
     <string name="int8_quantization">INT8 量化</string>
     <string name="int8_quantization_summary">通过牺牲部分精度，加速推理过程</string>
     <string name="use_gpu">使用 GPU 进行推理</string>

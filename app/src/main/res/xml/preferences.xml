@@ -27,6 +27,10 @@
             android:summary="%s"
             android:title="@string/powersave_mode" />
         <SwitchPreference
+            android:key="fp16_quantization"
+            android:summary="@string/fp16_quantization_summary"
+            android:title="@string/fp16_quantization" />
+        <SwitchPreference
             android:key="int8_quantization"
             android:summary="@string/int8_quantization_summary"
             android:title="@string/int8_quantization" />

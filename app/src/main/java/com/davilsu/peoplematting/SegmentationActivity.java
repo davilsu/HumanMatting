@@ -4,8 +4,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.exifinterface.media.ExifInterface;
+import androidx.preference.PreferenceManager;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -13,7 +15,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -27,8 +32,6 @@ public class SegmentationActivity extends AppCompatActivity {
     private static final Executor executor = Executors.newSingleThreadExecutor();
 
     private ImageView imageView;
-    private @Nullable
-    Bitmap bitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,13 +49,38 @@ public class SegmentationActivity extends AppCompatActivity {
             executor.execute(() -> {
                 Bitmap bitmap = loadImageFromIntent(intent);
                 if (bitmap != null) {
-                    runOnUiThread(() -> {
-                        SegmentationActivity.this.bitmap = bitmap;
-                        imageView.setImageBitmap(bitmap);
-                    });
+                    runSegmentationNetwork(bitmap);
                 }
             });
         }
+    }
+
+    private void runSegmentationNetwork(Bitmap bitmap) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        int prefMode = Integer.parseInt(preferences.getString("powersave_mode", "0"));
+        int modelIndex = Integer.parseInt(preferences.getString("segmentation_network", "1"));
+        boolean useGpu = preferences.getBoolean("int8_quantization", false);
+        boolean fp16Quantization = preferences.getBoolean("fp16_quantization", false);
+        boolean int8Quantization = preferences.getBoolean("int8_quantization", false);
+
+        Bitmap outputBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        MattingNetwork network = new MattingNetwork();
+        if (!network.Init(getAssets(), prefMode)) {
+            runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Device does not support big.LITTLE architecture", Toast.LENGTH_LONG).show());
+        }
+        int ret = network.Process(getAssets(), outputBitmap, modelIndex, fp16Quantization, int8Quantization, useGpu);
+        if (ret < 0) {
+            runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Inference Error", Toast.LENGTH_LONG).show());
+            return;
+        }
+        double elapsedTime = ret / 100.0;
+        runOnUiThread(() -> Toast.makeText(getApplicationContext(), String.format("Inference time: %.2fms", elapsedTime), Toast.LENGTH_SHORT).show());
+
+        runOnUiThread(() -> {
+            ProgressBar progressbar = findViewById(R.id.progress_bar);
+            progressbar.setVisibility(View.GONE);
+            imageView.setImageBitmap(outputBitmap);
+        });
     }
 
     private Bitmap loadImageFromIntent(Intent intent) {
