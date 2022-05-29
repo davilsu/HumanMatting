@@ -27,11 +27,13 @@
                 android:id="@+id/shutter"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
+                android:layout_marginBottom="40dp"
+                android:clickable="true"
+                android:focusable="true"
                 android:src="@drawable/ic_shutter"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                android:layout_marginBottom="40dp"/>
+                app:layout_constraintRight_toRightOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

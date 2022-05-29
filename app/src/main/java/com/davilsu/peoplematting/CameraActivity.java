@@ -11,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
 
 import com.otaliastudios.cameraview.CameraView;
 import com.otaliastudios.cameraview.controls.Facing;
@@ -34,6 +35,8 @@ public class CameraActivity extends AppCompatActivity {
         cameraView = findViewById(R.id.camera);
         cameraView.setFacing(Facing.valueOf(preferences.getString("default_camera_face", "FRONT")));
         cameraView.setLifecycleOwner(this);
+
+        ((ImageView) findViewById(R.id.shutter)).setOnClickListener(v -> takePhoto());
     }
 
     @Override
@@ -50,6 +53,9 @@ public class CameraActivity extends AppCompatActivity {
                 return true;
             case R.id.preferences:
                 openPreferences();
+                return true;
+            case R.id.pick_file:
+                pickFile();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -69,5 +75,22 @@ public class CameraActivity extends AppCompatActivity {
 
     public void openPreferences() {
         startActivity(new Intent(this, PreferencesActivity.class));
+        overridePendingTransition(0, 0);
+    }
+
+    public void pickFile() {
+        // TODO
+    }
+
+    public void takePhoto() {
+        // TODO
+        startActivity(new Intent(this, SegmentationActivity.class));
+        overridePendingTransition(0, 0);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        overridePendingTransition(0, 0);
     }
 }
