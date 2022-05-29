@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:title="@string/preferences"
+    android:key="preferences">
+    <PreferenceCategory android:title="@string/segmentation_category">
+        <ListPreference android:key="segmentation_network"
+            android:title="@string/segmentation_network"
+            android:entries="@array/segmentation_network_names"
+            android:entryValues="@array/segmentation_network_values"
+            android:defaultValue="1"/>
+    </PreferenceCategory>
+</PreferenceScreen>

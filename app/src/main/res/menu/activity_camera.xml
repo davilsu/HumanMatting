@@ -7,8 +7,8 @@
         android:icon="@drawable/ic_action_switch_camera"
         material:showAsAction="always"/>
     <item
-        android:id="@+id/settings"
-        android:title="设置"
+        android:id="@+id/preferences"
+        android:title="首选项"
         android:icon="@drawable/ic_action_preferences"
         material:showAsAction="always"/>
 </menu>

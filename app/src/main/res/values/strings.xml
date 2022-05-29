@@ -1,7 +1,8 @@
 <resources>
-    <string name="app_name">HumanMatting</string>
-    <string-array name="MattingModels">
-        <item>MobilenetV2</item>
-        <item>HRNet W18</item>
-    </string-array>
+    <string name="app_name">人像抠图</string>
+    <string name="preferences">首选项</string>
+    <string name="segmentation_category">抠图</string>
+    <string name="segmentation_network">图像分割网络</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
