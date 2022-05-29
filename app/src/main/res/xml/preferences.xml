@@ -1,12 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    android:title="@string/preferences"
-    android:key="preferences">
+    android:key="preferences"
+    android:title="@string/preferences">
+    <PreferenceCategory android:title="@string/camera_category">
+        <ListPreference
+            android:defaultValue="FRONT"
+            android:entries="@array/camera_face_names"
+            android:entryValues="@array/camera_face_values"
+            android:key="default_camera_face"
+            android:summary="%s"
+            android:title="@string/default_camera_face" />
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/segmentation_category">
-        <ListPreference android:key="segmentation_network"
-            android:title="@string/segmentation_network"
+        <ListPreference
+            android:defaultValue="1"
             android:entries="@array/segmentation_network_names"
             android:entryValues="@array/segmentation_network_values"
-            android:defaultValue="1"/>
+            android:key="segmentation_network"
+            android:summary="%s"
+            android:title="@string/segmentation_network" />
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/powersave_mode_names"
+            android:entryValues="@array/powersave_mode_values"
+            android:key="powersave_mode"
+            android:summary="%s"
+            android:title="@string/powersave_mode" />
+        <SwitchPreference
+            android:key="int8_quantization"
+            android:summary="@string/int8_quantization_summary"
+            android:title="@string/int8_quantization" />
+        <SwitchPreference
+            android:key="use_gpu"
+            android:summary="@string/use_gpu_summary"
+            android:title="@string/use_gpu" />
     </PreferenceCategory>
 </PreferenceScreen>

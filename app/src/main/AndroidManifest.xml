@@ -20,18 +20,19 @@
         android:theme="@style/Theme.Normal"
         tools:targetApi="32">
         <activity
-            android:name=".PreferencesActivity"
-            android:exported="false" />
-        <activity
             android:name=".CameraActivity"
-            android:theme="@style/Theme.Fullscreen"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.Fullscreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".PreferencesActivity"
+            android:exported="false"
+            android:parentActivityName=".CameraActivity" />
     </application>
 
 </manifest>

@@ -6,8 +6,7 @@
         android:id="@+id/camera"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:cameraAudio="off"
-        app:cameraFacing="front" />
+        app:cameraAudio="off" />
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"

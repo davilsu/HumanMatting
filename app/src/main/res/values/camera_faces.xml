@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="camera_face_names">
+        <item>前置摄像头</item>
+        <item>后置摄像头</item>
+    </string-array>
+    <string-array name="camera_face_values">
+        <item>FRONT</item>
+        <item>BACK</item>
+    </string-array>
+</resources>

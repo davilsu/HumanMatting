@@ -1,8 +1,13 @@
 <resources>
     <string name="app_name">人像抠图</string>
     <string name="preferences">首选项</string>
+    <string name="camera_category">相机</string>
+    <string name="default_camera_face">默认摄像头</string>
     <string name="segmentation_category">抠图</string>
     <string name="segmentation_network">图像分割网络</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="int8_quantization">INT8 量化</string>
+    <string name="int8_quantization_summary">通过牺牲部分精度，加速推理过程</string>
+    <string name="use_gpu">使用 GPU 进行推理</string>
+    <string name="use_gpu_summary">需要硬件支持</string>
+    <string name="powersave_mode">NCNN 性能模式</string>
 </resources>
