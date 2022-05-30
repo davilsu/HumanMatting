@@ -5,6 +5,7 @@ plugins {
 android {
     compileSdk 32
     ndkVersion "24.0.8215888"
+    buildToolsVersion '32.0.0'
     defaultConfig {
         applicationId "com.davilsu.finalmattingapp"
         minSdk 28
