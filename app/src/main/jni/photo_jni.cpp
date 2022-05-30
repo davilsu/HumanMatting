@@ -98,20 +98,16 @@ bool loadNetwork(JNIEnv *env, jobject assetManager, size_t modelIndex,
   return ret0 && ret1;
 }
 
-void alphaConcate(ncnn::Mat &img, const ncnn::Mat &alpha) {
+void alphaPremultiply(ncnn::Mat &img, const ncnn::Mat &alpha) {
   auto img_ptr = reinterpret_cast<float *>(img.data);
   auto alpha_ptr = reinterpret_cast<float *>(alpha.data);
   ptrdiff_t n_pixels = img.w * img.h;
   for (ptrdiff_t idx = 0; idx < n_pixels; idx++) {
-    float *r = img_ptr + idx;
-    float *g = img_ptr + n_pixels + idx;
-    float *b = img_ptr + 2 * n_pixels + idx;
-    float *a = img_ptr + 3 * n_pixels + idx;
-    float alpha = alpha_ptr[idx];
-    *a = alpha * 255.0f;
-    *r *= alpha;
-    *g *= alpha;
-    *b *= alpha;
+    float alpha_ = alpha_ptr[idx];
+    img_ptr[idx + 0 * n_pixels] *= alpha_;
+    img_ptr[idx + 1 * n_pixels] *= alpha_;
+    img_ptr[idx + 2 * n_pixels] *= alpha_;
+    img_ptr[idx + 3 * n_pixels] = alpha_ * 255.0F;
   }
 }
 
@@ -199,7 +195,7 @@ Java_com_davilsu_peoplematting_MattingNetwork_Process(
   ex.extract("output", alpha);
   ncnn::resize_bilinear(alpha, alpha, oriWidth, oriHeight);
 
-  alphaConcate(src, alpha);
+  alphaPremultiply(src, alpha);
   src.to_android_bitmap(env, bitmap, ncnn::Mat::PIXEL_RGBA);
 
   double elapsed_time = ncnn::get_current_time() - start_time;

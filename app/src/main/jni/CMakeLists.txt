@@ -7,4 +7,4 @@ find_package(ncnn REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED photo_jni.cpp)
 
-target_link_libraries(${PROJECT_NAME} ncnn ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} ncnn)
