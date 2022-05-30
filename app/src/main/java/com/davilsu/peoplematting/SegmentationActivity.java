@@ -50,6 +50,7 @@ public class SegmentationActivity extends AppCompatActivity {
     private static final Executor executor = Executors.newSingleThreadExecutor();
 
     private ImageView imageView;
+    private ProgressBar progressbar;
     @Nullable
     private Bitmap bitmapAlpha;
     @Nullable
@@ -65,6 +66,7 @@ public class SegmentationActivity extends AppCompatActivity {
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
 
         imageView = findViewById(R.id.image_view);
+        progressbar = findViewById(R.id.progress_bar);
 
         findViewById(R.id.color_pick_transparency).setOnClickListener(view -> blendAlpha());
         findViewById(R.id.color_pick_black).setOnClickListener(view -> blendColor(getColor(R.color.photo_black)));
@@ -117,7 +119,6 @@ public class SegmentationActivity extends AppCompatActivity {
         runOnUiThread(() -> {
             bitmapAlpha = outputBitmap;
             bitmapBlended = outputBitmap;
-            ProgressBar progressbar = findViewById(R.id.progress_bar);
             progressbar.setVisibility(View.GONE);
             imageView.setImageBitmap(outputBitmap);
         });
@@ -279,6 +280,7 @@ public class SegmentationActivity extends AppCompatActivity {
     }
 
     public void doBlendImage(Uri image) {
+        progressbar.setVisibility(View.VISIBLE);
         executor.execute(() -> {
             Bitmap bitmapBackground;
             try (InputStream in = getContentResolver().openInputStream(image)) {
@@ -294,6 +296,7 @@ public class SegmentationActivity extends AppCompatActivity {
             canvas.drawBitmap(bitmapBackground, null, new Rect(0, 0, overlay.getWidth(), overlay.getHeight()), null);
             canvas.drawBitmap(bitmapAlpha, 0, 0, null);
             runOnUiThread(() -> {
+                progressbar.setVisibility(View.GONE);
                 bitmapBlended = overlay;
                 imageView.setImageBitmap(bitmapBlended);
             });
