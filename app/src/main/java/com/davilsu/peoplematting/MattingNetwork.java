@@ -12,5 +12,4 @@ public class MattingNetwork {
 
     public native int Process(AssetManager mgr, Bitmap bitmap, int modelIndex, boolean enableFP16, boolean enableInt8, boolean enableGPU);
 
-    public native boolean isNetworkChange(int modelIndex, boolean enableFP16, boolean enableInt8);
 }

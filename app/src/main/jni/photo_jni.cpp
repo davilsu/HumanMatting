@@ -15,10 +15,12 @@
 // Model parameter files
 ///////////////////////////////////////////////////////////////////////////////////////////////
 constexpr size_t kModels = 4;
-constexpr const char *kModelPaths[kModels]
-    {"mobilenet_v2.bin", "hrnet_w18.bin", "mobilenet_v2_int8.bin", "hrnet_w18_int8.bin"};
-constexpr const char *kParamPaths[kModels]
-    {"mobilenet_v2.param", "hrnet_w18.param", "mobilenet_v2_int8.param", "hrnet_w18_int8.param"};
+constexpr const char *kModelPaths[kModels]{"mobilenet_v2.bin", "hrnet_w18.bin",
+                                           "mobilenet_v2_int8.bin",
+                                           "hrnet_w18_int8.bin"};
+constexpr const char *kParamPaths[kModels]{
+    "mobilenet_v2.param", "hrnet_w18.param", "mobilenet_v2_int8.param",
+    "hrnet_w18_int8.param"};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Input parameters
@@ -29,7 +31,6 @@ constexpr int kResolution = 512;
 // Constant values
 ///////////////////////////////////////////////////////////////////////////////////////////////
 constexpr const char *kTag = "MattingNetwork";
-// constexpr float kBackgroundColor[3]{120, 255, 155};
 constexpr float kMean[3]{(255.0 / 2.0), (255.0 / 2.0), (255.0 / 2.0)};
 constexpr float kNorm[3]{(2.0 / 255.0), (2.0 / 255.0), (2.0 / 255.0)};
 
@@ -39,7 +40,8 @@ constexpr float kNorm[3]{(2.0 / 255.0), (2.0 / 255.0), (2.0 / 255.0)};
 static int kThreads = -1;
 static ncnn::UnlockedPoolAllocator g_blob_pool_allocator;
 static ncnn::PoolAllocator g_workspace_pool_allocator;
-static std::array<std::shared_ptr<ncnn::Net>, kModels> mattingNet{nullptr, nullptr};
+static std::array<std::shared_ptr<ncnn::Net>, kModels> mattingNet{nullptr,
+                                                                  nullptr};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // JNI initialize
@@ -73,7 +75,8 @@ bool loadNetwork(JNIEnv *env, jobject assetManager, size_t modelIndex,
 #ifdef NCNN_VULKAN
   mattingNet[modelIndex]->opt.use_vulkan_compute = (ncnn::get_gpu_count() != 0);
 #else
-  __android_log_print(ANDROID_LOG_WARN, kTag, "NCNN is not compiled with Vulkan, please recompile");
+  __android_log_print(ANDROID_LOG_WARN, kTag,
+                      "NCNN is not compiled with Vulkan, please recompile");
 #endif
   mattingNet[modelIndex]->opt.use_fp16_arithmetic = enableFP16 || enableInt8;
   mattingNet[modelIndex]->opt.use_fp16_packed = enableFP16 || enableInt8;
@@ -85,59 +88,33 @@ bool loadNetwork(JNIEnv *env, jobject assetManager, size_t modelIndex,
   AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);
 
   double t0 = ncnn::get_current_time();
-  bool ret0 = mattingNet[modelIndex]->load_param(mgr, kParamPaths[modelIndex]) == 0;
-  bool ret1 = mattingNet[modelIndex]->load_model(mgr, kModelPaths[modelIndex]) == 0;
+  bool ret0 =
+      mattingNet[modelIndex]->load_param(mgr, kParamPaths[modelIndex]) == 0;
+  bool ret1 =
+      mattingNet[modelIndex]->load_model(mgr, kModelPaths[modelIndex]) == 0;
   double t1 = ncnn::get_current_time();
   __android_log_print(ANDROID_LOG_DEBUG, kTag, "%s\tLoadTime: %.2fms",
                       kParamPaths[modelIndex], (t1 - t0));
   return ret0 && ret1;
 }
 
-//void blendImage(ncnn::Mat &img, const ncnn::Mat &alpha) {
-//  auto img_ptr = reinterpret_cast<float *>(img.data);
-//  auto alpha_ptr = reinterpret_cast<float *>(alpha.data);
-//  ptrdiff_t width = img.w;
-//  ptrdiff_t height = img.h;
-//  ptrdiff_t n_pixels = width * height;
-//  for (ptrdiff_t h = 0; h < height; ++h) {
-//    for (ptrdiff_t w = 0; w < width; ++w) {
-//      ptrdiff_t pixel_index = h * width + w;
-//      float alpha_ = alpha_ptr[pixel_index];
-//      for (ptrdiff_t c = 0; c < 3; ++c) {
-//        img_ptr[pixel_index + n_pixels * c] =
-//            alpha_ * img_ptr[pixel_index + n_pixels * c] +
-//                (1 - alpha_) * kBackgroundColor[c];
-//      }
-//    }
-//  }
-//}
-
 void alphaConcate(ncnn::Mat &img, const ncnn::Mat &alpha) {
   auto img_ptr = reinterpret_cast<float *>(img.data);
   auto alpha_ptr = reinterpret_cast<float *>(alpha.data);
   ptrdiff_t n_pixels = img.w * img.h;
-  std::copy(alpha_ptr, alpha_ptr + n_pixels, img_ptr + 3 * n_pixels);
-  std::for_each_n(img_ptr + 3 * n_pixels, n_pixels, [](float &elem){elem *= 255.F;});
+  std::transform(alpha_ptr, alpha_ptr + n_pixels, img_ptr + 3 * n_pixels,
+                 [](float elem) { return elem * 255.F; });
 }
 
 bool isNetworkChange(int modelIndex, bool enableFP16, bool enableInt8) {
-  if (mattingNet[modelIndex] == nullptr)
-    return true;
-  return (enableFP16 || enableInt8) != mattingNet[modelIndex]->opt.use_fp16_packed;
+  if (mattingNet[modelIndex] == nullptr) return true;
+  return (enableFP16 || enableInt8) !=
+      mattingNet[modelIndex]->opt.use_fp16_packed;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Library functions
 ///////////////////////////////////////////////////////////////////////////////////////////////
-extern "C" JNIEXPORT jboolean JNICALL
-Java_com_davilsu_peoplematting_MattingNetwork_isNetworkChange(
-    JNIEnv *env, jobject thiz, jint modelIndex, jboolean enableFP16, jboolean enableInt8) {
-  bool _enableFP16 = (enableFP16 == JNI_TRUE);
-  bool _enableInt8 = (enableInt8 == JNI_TRUE);
-  modelIndex += _enableInt8 ? kModels / 2 : 0;
-  return isNetworkChange(modelIndex, _enableFP16, _enableInt8) ? JNI_TRUE : JNI_FALSE;
-}
-
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_davilsu_peoplematting_MattingNetwork_Init(JNIEnv *env, jobject thiz,
                                                    jobject assetManager,
@@ -158,7 +135,8 @@ Java_com_davilsu_peoplematting_MattingNetwork_Init(JNIEnv *env, jobject thiz,
                       kThreads, ncnn::get_gpu_count());
 
   if (ncnn::get_little_cpu_count() == 0) {
-    __android_log_print(ANDROID_LOG_WARN, kTag, "big.LITTLE is not supported, use all cores");
+    __android_log_print(ANDROID_LOG_WARN, kTag,
+                        "big.LITTLE is not supported, use all cores");
     return JNI_FALSE;
   }
 
@@ -168,7 +146,8 @@ Java_com_davilsu_peoplematting_MattingNetwork_Init(JNIEnv *env, jobject thiz,
 extern "C" JNIEXPORT jint JNICALL
 Java_com_davilsu_peoplematting_MattingNetwork_Process(
     JNIEnv *env, jobject thiz, jobject assetManager, jobject bitmap,
-    jint modelIndex, jboolean enableFP16, jboolean enableInt8, jboolean enableGPU) {
+    jint modelIndex, jboolean enableFP16, jboolean enableInt8,
+    jboolean enableGPU) {
   const bool _enableGPU = (enableGPU == JNI_TRUE);
   const bool _enableFP16 = (enableFP16 == JNI_TRUE);
   const bool _enableInt8 = (enableInt8 == JNI_TRUE);
@@ -182,7 +161,8 @@ Java_com_davilsu_peoplematting_MattingNetwork_Process(
   if (isNetworkChange(modelIndex, _enableFP16, _enableInt8)) {
     __android_log_print(ANDROID_LOG_DEBUG, kTag,
                         "Model config change, reload model...");
-    bool ret = loadNetwork(env, assetManager, modelIndex, _enableFP16, _enableInt8);
+    bool ret =
+        loadNetwork(env, assetManager, modelIndex, _enableFP16, _enableInt8);
     if (!ret) {
       return -1;
     }
@@ -210,7 +190,6 @@ Java_com_davilsu_peoplematting_MattingNetwork_Process(
   ex.extract("output", alpha);
   ncnn::resize_bilinear(alpha, alpha, oriWidth, oriHeight);
 
-  // blendImage(src, alpha);
   alphaConcate(src, alpha);
   src.to_android_bitmap(env, bitmap, ncnn::Mat::PIXEL_RGBA);
 

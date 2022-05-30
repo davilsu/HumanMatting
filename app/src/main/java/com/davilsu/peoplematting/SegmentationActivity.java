@@ -1,12 +1,6 @@
 package com.davilsu.peoplematting;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
-import androidx.exifinterface.media.ExifInterface;
-import androidx.preference.PreferenceManager;
-
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -15,7 +9,6 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -30,6 +23,13 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
+import androidx.exifinterface.media.ExifInterface;
+import androidx.preference.PreferenceManager;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -61,17 +62,17 @@ public class SegmentationActivity extends AppCompatActivity {
 
         setTitle(R.string.select_background);
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
 
         imageView = findViewById(R.id.image_view);
 
-        ((ImageView) findViewById(R.id.color_pick_transparency)).setOnClickListener(view -> blendAlpha());
-        ((ImageView) findViewById(R.id.color_pick_black)).setOnClickListener(view -> blendColor(getColor(R.color.photo_black)));
-        ((ImageView) findViewById(R.id.color_pick_white)).setOnClickListener(view -> blendColor(getColor(R.color.photo_white)));
-        ((ImageView) findViewById(R.id.color_pick_red)).setOnClickListener(view -> blendColor(getColor(R.color.photo_red)));
-        ((ImageView) findViewById(R.id.color_pick_green)).setOnClickListener(view -> blendColor(getColor(R.color.photo_green)));
-        ((ImageView) findViewById(R.id.color_pick_blue)).setOnClickListener(view -> blendColor(getColor(R.color.photo_blue)));
-        ((ImageView) findViewById(R.id.color_pick_image)).setOnClickListener(view -> blendImage());
+        findViewById(R.id.color_pick_transparency).setOnClickListener(view -> blendAlpha());
+        findViewById(R.id.color_pick_black).setOnClickListener(view -> blendColor(getColor(R.color.photo_black)));
+        findViewById(R.id.color_pick_white).setOnClickListener(view -> blendColor(getColor(R.color.photo_white)));
+        findViewById(R.id.color_pick_red).setOnClickListener(view -> blendColor(getColor(R.color.photo_red)));
+        findViewById(R.id.color_pick_green).setOnClickListener(view -> blendColor(getColor(R.color.photo_green)));
+        findViewById(R.id.color_pick_blue).setOnClickListener(view -> blendColor(getColor(R.color.photo_blue)));
+        findViewById(R.id.color_pick_image).setOnClickListener(view -> blendImage());
 
         Intent intent = getIntent();
         if (intent != null) {
@@ -84,9 +85,10 @@ public class SegmentationActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressLint("DefaultLocale")
     private void runSegmentationNetwork(Bitmap bitmap) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        int prefMode = Integer.parseInt(preferences.getString("powersave_mode", "0"));
+        int prefMode = Integer.parseInt(preferences.getString("power_mode", "0"));
         int modelIndex = Integer.parseInt(preferences.getString("segmentation_network", "1"));
         boolean useGpu = preferences.getBoolean("int8_quantization", false);
         boolean fp16Quantization = preferences.getBoolean("fp16_quantization", false);
@@ -136,6 +138,7 @@ public class SegmentationActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressLint("NonConstantResourceId")
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
@@ -257,6 +260,7 @@ public class SegmentationActivity extends AppCompatActivity {
 
     public void blendColor(int color) {
         executor.execute(() -> {
+            assert bitmapAlpha != null;
             Bitmap overlay = Bitmap.createBitmap(bitmapAlpha.getWidth(), bitmapAlpha.getHeight(), bitmapAlpha.getConfig());
             Canvas canvas = new Canvas(overlay);
             canvas.drawColor(color);
@@ -284,6 +288,7 @@ public class SegmentationActivity extends AppCompatActivity {
                 return;
             }
 
+            assert bitmapAlpha != null;
             Bitmap overlay = Bitmap.createBitmap(bitmapAlpha.getWidth(), bitmapAlpha.getHeight(), bitmapAlpha.getConfig());
             Canvas canvas = new Canvas(overlay);
             canvas.drawBitmap(bitmapBackground, null, new Rect(0, 0, overlay.getWidth(), overlay.getHeight()), null);
@@ -297,15 +302,12 @@ public class SegmentationActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        switch (requestCode) {
-            case REQUEST_CODE_PICK_BACKGROUND:
-                if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
-                    doBlendImage(data.getData());
-                }
-                break;
-            default:
-                super.onActivityResult(requestCode, resultCode, data);
-                break;
+        if (requestCode == REQUEST_CODE_PICK_BACKGROUND) {
+            if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+                doBlendImage(data.getData());
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
         }
     }
 }

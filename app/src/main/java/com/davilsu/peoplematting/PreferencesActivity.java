@@ -12,6 +12,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 
+import java.util.Objects;
+
 public class PreferencesActivity extends AppCompatActivity {
 
     @Override
@@ -25,18 +27,16 @@ public class PreferencesActivity extends AppCompatActivity {
         transaction.add(R.id.content_view,new PreferencesFragment());
         transaction.commit();
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch(item.getItemId()){
-            case android.R.id.home:
-                finish();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
         }
+        return super.onOptionsItemSelected(item);
     }
 
     public static class PreferencesFragment extends PreferenceFragmentCompat {

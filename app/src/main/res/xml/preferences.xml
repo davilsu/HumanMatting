@@ -25,7 +25,7 @@
             android:entryValues="@array/powersave_mode_values"
             android:key="powersave_mode"
             android:summary="%s"
-            android:title="@string/powersave_mode" />
+            android:title="@string/power_mode" />
         <SwitchPreference
             android:key="fp16_quantization"
             android:summary="@string/fp16_quantization_summary"
