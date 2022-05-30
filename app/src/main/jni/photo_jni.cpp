@@ -102,8 +102,17 @@ void alphaConcate(ncnn::Mat &img, const ncnn::Mat &alpha) {
   auto img_ptr = reinterpret_cast<float *>(img.data);
   auto alpha_ptr = reinterpret_cast<float *>(alpha.data);
   ptrdiff_t n_pixels = img.w * img.h;
-  std::transform(alpha_ptr, alpha_ptr + n_pixels, img_ptr + 3 * n_pixels,
-                 [](float elem) { return elem * 255.F; });
+  for (ptrdiff_t idx = 0; idx < n_pixels; idx++) {
+    float *r = img_ptr + idx;
+    float *g = img_ptr + n_pixels + idx;
+    float *b = img_ptr + 2 * n_pixels + idx;
+    float *a = img_ptr + 3 * n_pixels + idx;
+    float alpha = alpha_ptr[idx];
+    *a = alpha * 255.0f;
+    *r *= alpha;
+    *g *= alpha;
+    *b *= alpha;
+  }
 }
 
 bool isNetworkChange(int modelIndex, bool enableFP16, bool enableInt8) {

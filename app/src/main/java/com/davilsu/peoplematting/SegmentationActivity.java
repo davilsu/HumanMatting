@@ -97,6 +97,7 @@ public class SegmentationActivity extends AppCompatActivity {
         boolean int8Quantization = preferences.getBoolean("int8_quantization", false);
 
         Bitmap outputBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        outputBitmap.setPremultiplied(true);
         bitmap.recycle();
         outputBitmap.setHasAlpha(true);
         MattingNetwork network = new MattingNetwork();
@@ -110,11 +111,6 @@ public class SegmentationActivity extends AppCompatActivity {
         }
         double elapsedTime = ret / 100.0;
         runOnUiThread(() -> Toast.makeText(this, getString(R.string.inference_cost_time) + String.format("%.2fms", elapsedTime), Toast.LENGTH_SHORT).show());
-
-        // TODO workaround
-        int[] buf = new int[outputBitmap.getWidth() * outputBitmap.getHeight()];
-        outputBitmap.getPixels(buf, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
-        outputBitmap.setPixels(buf, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
 
         runOnUiThread(() -> {
             bitmapAlpha = outputBitmap;
