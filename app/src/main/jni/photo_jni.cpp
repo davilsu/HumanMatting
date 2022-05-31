@@ -3,9 +3,9 @@
 #include <android/log.h>
 #include <jni.h>
 
+#include <algorithm>
 #include <array>
 #include <memory>
-#include <string>
 
 #include "benchmark.h"
 #include "cpu.h"
@@ -15,10 +15,10 @@
 // Model parameter files
 ///////////////////////////////////////////////////////////////////////////////////////////////
 constexpr size_t kModels = 4;
-constexpr const char *kModelPaths[kModels]{"mobilenet_v2.bin", "hrnet_w18.bin",
-                                           "mobilenet_v2_int8.bin",
-                                           "hrnet_w18_int8.bin"};
-constexpr const char *kParamPaths[kModels]{
+constexpr std::array<const char *, kModels> kModelPaths{
+    "mobilenet_v2.bin", "hrnet_w18.bin", "mobilenet_v2_int8.bin",
+    "hrnet_w18_int8.bin"};
+constexpr std::array<const char *, kModels> kParamPaths{
     "mobilenet_v2.param", "hrnet_w18.param", "mobilenet_v2_int8.param",
     "hrnet_w18_int8.param"};
 
@@ -31,8 +31,10 @@ constexpr int kResolution = 512;
 // Constant values
 ///////////////////////////////////////////////////////////////////////////////////////////////
 constexpr const char *kTag = "MattingNetwork";
-constexpr float kMean[3]{(255.0 / 2.0), (255.0 / 2.0), (255.0 / 2.0)};
-constexpr float kNorm[3]{(2.0 / 255.0), (2.0 / 255.0), (2.0 / 255.0)};
+constexpr std::array<float, 3> kMean{(255.0 / 2.0), (255.0 / 2.0),
+                                     (255.0 / 2.0)};
+constexpr std::array<float, 3> kNorm{(2.0 / 255.0), (2.0 / 255.0),
+                                     (2.0 / 255.0)};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Resource
@@ -68,33 +70,35 @@ bool loadNetwork(JNIEnv *env, jobject assetManager, size_t modelIndex,
     return false;
   }
   mattingNet.at(modelIndex) = std::make_shared<ncnn::Net>();
-  mattingNet[modelIndex]->opt.num_threads = kThreads;
-  mattingNet[modelIndex]->opt.lightmode = true;
-  mattingNet[modelIndex]->opt.blob_allocator = &g_blob_pool_allocator;
-  mattingNet[modelIndex]->opt.workspace_allocator = &g_workspace_pool_allocator;
+  ncnn::Option opt;
+  opt.num_threads = kThreads;
+  opt.lightmode = true;
+  opt.blob_allocator = &g_blob_pool_allocator;
+  opt.workspace_allocator = &g_workspace_pool_allocator;
 #ifdef NCNN_VULKAN
-  mattingNet[modelIndex]->opt.use_vulkan_compute = (ncnn::get_gpu_count() != 0);
+  opt.use_vulkan_compute = (ncnn::get_gpu_count() != 0);
 #else
   __android_log_print(ANDROID_LOG_WARN, kTag,
                       "NCNN is not compiled with Vulkan, please recompile");
 #endif
-  mattingNet[modelIndex]->opt.use_fp16_arithmetic = enableFP16 || enableInt8;
-  mattingNet[modelIndex]->opt.use_fp16_packed = enableFP16 || enableInt8;
-  mattingNet[modelIndex]->opt.use_fp16_storage = enableFP16 || enableInt8;
-  mattingNet[modelIndex]->opt.use_int8_arithmetic = true;
-  mattingNet[modelIndex]->opt.use_int8_inference = true;
-  mattingNet[modelIndex]->opt.use_int8_packed = true;
-  mattingNet[modelIndex]->opt.use_int8_storage = true;
+  opt.use_fp16_arithmetic = enableFP16 || enableInt8;
+  opt.use_fp16_packed = enableFP16 || enableInt8;
+  opt.use_fp16_storage = enableFP16 || enableInt8;
+  opt.use_int8_arithmetic = true;
+  opt.use_int8_inference = true;
+  opt.use_int8_packed = true;
+  opt.use_int8_storage = true;
+  mattingNet.at(modelIndex)->opt = opt;
   AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);
 
   double t0 = ncnn::get_current_time();
   bool ret0 =
-      mattingNet[modelIndex]->load_param(mgr, kParamPaths[modelIndex]) == 0;
+      mattingNet.at(modelIndex)->load_param(mgr, kParamPaths.at(modelIndex)) == 0;
   bool ret1 =
-      mattingNet[modelIndex]->load_model(mgr, kModelPaths[modelIndex]) == 0;
+      mattingNet.at(modelIndex)->load_model(mgr, kModelPaths.at(modelIndex)) == 0;
   double t1 = ncnn::get_current_time();
   __android_log_print(ANDROID_LOG_DEBUG, kTag, "%s\tLoadTime: %.2fms",
-                      kParamPaths[modelIndex], (t1 - t0));
+                      kParamPaths.at(modelIndex), (t1 - t0));
   return ret0 && ret1;
 }
 
@@ -102,8 +106,11 @@ void alphaPremultiply(ncnn::Mat &img, const ncnn::Mat &alpha) {
   auto img_ptr = reinterpret_cast<float *>(img.data);
   auto alpha_ptr = reinterpret_cast<float *>(alpha.data);
   ptrdiff_t n_pixels = img.w * img.h;
-  for (ptrdiff_t idx = 0; idx < n_pixels; idx++) {
-    float alpha_ = alpha_ptr[idx];
+  auto clamp{[](float x, float min_, float max_) {
+    return std::min<float>(max_, std::max<float>(min_, x));
+  }};
+  for (ptrdiff_t idx = 0; idx < n_pixels; ++idx) {
+    float alpha_ = clamp(alpha_ptr[idx], 0.0F, 1.0F);
     img_ptr[idx + 0 * n_pixels] *= alpha_;
     img_ptr[idx + 1 * n_pixels] *= alpha_;
     img_ptr[idx + 2 * n_pixels] *= alpha_;
@@ -112,9 +119,9 @@ void alphaPremultiply(ncnn::Mat &img, const ncnn::Mat &alpha) {
 }
 
 bool isNetworkChange(int modelIndex, bool enableFP16, bool enableInt8) {
-  if (mattingNet[modelIndex] == nullptr) return true;
+  if (mattingNet.at(modelIndex) == nullptr) return true;
   return (enableFP16 || enableInt8) !=
-      mattingNet[modelIndex]->opt.use_fp16_packed;
+      mattingNet.at(modelIndex)->opt.use_fp16_packed;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -186,8 +193,8 @@ Java_com_davilsu_peoplematting_MattingNetwork_Process(
   src = ncnn::Mat::from_android_bitmap(env, bitmap, ncnn::Mat::PIXEL_RGBA);
   src_resize = ncnn::Mat::from_android_bitmap_resize(
       env, bitmap, ncnn::Mat::PIXEL_RGB, kResolution, kResolution);
-  src_resize.substract_mean_normalize(kMean, kNorm);
-  ncnn::Extractor ex = mattingNet[modelIndex]->create_extractor();
+  src_resize.substract_mean_normalize(kMean.data(), kNorm.data());
+  ncnn::Extractor ex = mattingNet.at(modelIndex)->create_extractor();
 #ifdef NCNN_VULKAN
   ex.set_vulkan_compute(_enableGPU);
 #endif

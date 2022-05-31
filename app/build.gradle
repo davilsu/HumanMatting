@@ -26,7 +26,7 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -43,7 +43,8 @@ android {
     android.applicationVariants.all {
         variant ->
             variant.outputs.all {
-                outputFileName = "HumanMatting_${variant.buildType.name}_v${variant.versionName}.apk"
+                def date = new Date().format("yyyyMMdd", TimeZone.getTimeZone("GMT+08"))
+                outputFileName = "HumanMatting_${variant.buildType.name}_v${variant.versionName}_${date}.apk"
             }
     }
 }
