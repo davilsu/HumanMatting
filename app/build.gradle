@@ -26,7 +26,7 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -39,6 +39,12 @@ android {
             version "3.18.1"
             path file('src/main/jni/CMakeLists.txt')
         }
+    }
+    android.applicationVariants.all {
+        variant ->
+            variant.outputs.all {
+                outputFileName = "HumanMatting_${variant.buildType.name}_v${variant.versionName}.apk"
+            }
     }
 }
 
